@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import People from "./pages/People";
 import Detail from "./pages/Detail";
 import New from "./pages/New";
+import Units from "./pages/Units";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -14,6 +15,16 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+
+        <Route
+          path="/units"
+          element={
+            <PrivateRoute>
+              <Units />
+            </PrivateRoute>
+          }
+        />
+
         <Route
           path="/people"
           element={
@@ -22,6 +33,7 @@ export default function App() {
             </PrivateRoute>
           }
         />
+
         <Route
           path="/people/new"
           element={
@@ -30,6 +42,7 @@ export default function App() {
             </PrivateRoute>
           }
         />
+
         <Route
           path="/people/:id"
           element={
