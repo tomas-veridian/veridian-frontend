@@ -19,6 +19,15 @@ function statusFromComm(item) {
 export default function Detail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+
+  const viewerPersonType = (currentUser?.person_type || "").toLowerCase();
+
+  const viewerIsResident =
+    !currentUser?.is_admin &&
+    ["owner", "tenant", "occupant", "resident"].includes(viewerPersonType);
+
+  const viewerIsSelf = currentUser?.membership_id === id;
 
   const [community, setCommunity] = useState({ id: "", name: "" });
   const [detail, setDetail] = useState(null);
@@ -61,7 +70,7 @@ export default function Detail() {
         api.get(`/communities/${communityInfo.id}/people/${id}/communications`),
         api.get(`/communities/${communityInfo.id}/people/${id}/permissions`),
         api.get(`/communities/${communityInfo.id}/people/${id}/permissions/matrix`),
-        api.get(`/units`),
+        api.get(`/communities/${communityInfo.id}/units`),
       ]);
 
       if (detailRes.status !== "fulfilled") {
@@ -171,7 +180,9 @@ export default function Detail() {
     }
   }
 
-  async function updatePermissions() {
+   async function updatePermissions() {
+    if (viewerIsResident) return;
+
     try {
       setError("");
       await api.patch(`/communities/${community.id}/people/${id}/permissions`, {
@@ -184,6 +195,8 @@ export default function Detail() {
   }
 
   async function archivePerson(archived) {
+    if (viewerIsResident) return;
+
     try {
       setError("");
       await api.patch(`/communities/${community.id}/people/${id}/archive`, { archived });
@@ -259,9 +272,24 @@ export default function Detail() {
           title="Owner Information"
           actions={
             <>
-              <button className="mini-button" onClick={updatePermissions}>Permissions</button>
-              <button className="mini-button">My Account</button>
-              <button className="table-action-button" onClick={() => navigate("/people/new")}>Edit</button>
+              {!viewerIsResident ? (
+                <button className="mini-button" onClick={updatePermissions}>
+                  Permissions
+                </button>
+              ) : null}
+
+              {viewerIsSelf ? (
+                <button className="mini-button">My Account</button>
+              ) : null}
+
+              {!viewerIsResident ? (
+                <button
+                  className="table-action-button"
+                  onClick={() => navigate("/people/new")}
+                >
+                  Edit
+                </button>
+              ) : null}
             </>
           }
         >
@@ -295,28 +323,35 @@ export default function Detail() {
             </div>
           </div>
 
-          <div className="detail-button-row">
-            <button className="mini-button">More info</button>
-            <button className="mini-button">Send activation email</button>
-          </div>
-
-          <div className="detail-controls-grid">
-            <label>
-              <span>Admin Role</span>
-              <select value={adminRole} onChange={(e) => setAdminRole(e.target.value)}>
-                <option value="none">none</option>
-                <option value="read_only_admin">read_only_admin</option>
-                <option value="people_admin">people_admin</option>
-                <option value="community_admin">community_admin</option>
-                <option value="super_admin">super_admin</option>
-              </select>
-            </label>
-
-            <div className="archive-controls">
-              <button className="mini-button" onClick={() => archivePerson(true)}>Archive</button>
-              <button className="mini-button" onClick={() => archivePerson(false)}>Restore</button>
+          {!viewerIsResident ? (
+            <div className="detail-button-row">
+              <button className="mini-button">Send activation email</button>
             </div>
-          </div>
+          ) : null}
+
+          {!viewerIsResident ? (
+            <div className="detail-controls-grid">
+              <label>
+                <span>Admin Role</span>
+                <select value={adminRole} onChange={(e) => setAdminRole(e.target.value)}>
+                  <option value="none">none</option>
+                  <option value="read_only_admin">read_only_admin</option>
+                  <option value="people_admin">people_admin</option>
+                  <option value="community_admin">community_admin</option>
+                  <option value="super_admin">super_admin</option>
+                </select>
+              </label>
+
+              <div className="archive-controls">
+                <button className="mini-button" onClick={() => archivePerson(true)}>
+                  Archive
+                </button>
+                <button className="mini-button" onClick={() => archivePerson(false)}>
+                  Restore
+                </button>
+              </div>
+            </div>
+          ) : null}
         </Card>
 
         <Card
@@ -471,22 +506,24 @@ export default function Detail() {
         </Card>
       </div>
 
-      <Card title="Effective Permissions">
-        <div className="permissions-grid">
-          {(permissions?.effective_permissions || []).map((perm) => (
-            <TagPill key={perm} label={perm} color="blue" />
-          ))}
-          {!permissions?.effective_permissions?.length ? (
-            <EmptyState text="No effective permissions found." />
-          ) : null}
-        </div>
-
-        {matrix ? (
-          <div className="matrix-copy">
-            View: {String(matrix.actions.can_view)} | Edit: {String(matrix.actions.can_edit)} | Archive: {String(matrix.actions.can_archive)} | Manage permissions: {String(matrix.actions.can_manage_permissions)} | Assign units: {String(matrix.actions.can_assign_units)}
+      {!viewerIsResident ? (
+        <Card title="Effective Permissions">
+          <div className="permissions-grid">
+            {(permissions?.effective_permissions || []).map((perm) => (
+              <TagPill key={perm} label={perm} color="blue" />
+            ))}
+            {!permissions?.effective_permissions?.length ? (
+              <EmptyState text="No effective permissions found." />
+            ) : null}
           </div>
-        ) : null}
-      </Card>
+
+          {matrix ? (
+            <div className="matrix-copy">
+              View: {String(matrix.actions.can_view)} | Edit: {String(matrix.actions.can_edit)} | Archive: {String(matrix.actions.can_archive)} | Manage permissions: {String(matrix.actions.can_manage_permissions)} | Assign units: {String(matrix.actions.can_assign_units)}
+            </div>
+          ) : null}
+        </Card>
+      ) : null}
 
       {isAssignUnitModalOpen ? (
         <div className="modal-backdrop" onClick={closeAssignUnitModal}>

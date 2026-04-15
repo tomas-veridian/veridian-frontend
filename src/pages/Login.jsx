@@ -26,10 +26,11 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify({
         membership_id: meResponse.data.membership_id,
         is_admin: meResponse.data.is_admin,
+        person_type: meResponse.data.person_type || null,
       }));
 
-      if (meResponse.data.is_admin) {
-        navigate("/people");
+       if (meResponse.data.is_admin) {
+        navigate("/units");
       } else {
         navigate(`/people/${meResponse.data.membership_id}`);
       }

@@ -24,12 +24,14 @@ api.interceptors.request.use((config) => {
 export async function resolveCommunity() {
   const existingId = localStorage.getItem("communityId") || import.meta.env.VITE_COMMUNITY_ID;
   const existingName = localStorage.getItem("communityName");
+
   if (existingId && existingName) {
     return { id: existingId, name: existingName };
   }
 
   const response = await api.get("/communities");
   const communities = response.data || [];
+
   if (!communities.length) {
     throw new Error("No communities available in API.");
   }
@@ -37,6 +39,7 @@ export async function resolveCommunity() {
   const selected = communities.find((item) => item.id === existingId) || communities[0];
   localStorage.setItem("communityId", selected.id);
   localStorage.setItem("communityName", selected.name);
+
   return { id: selected.id, name: selected.name };
 }
 
@@ -48,6 +51,7 @@ export function clearSession() {
   localStorage.removeItem("token");
   localStorage.removeItem("communityId");
   localStorage.removeItem("communityName");
+  localStorage.removeItem("user");
 }
 
 export default api;
