@@ -20,26 +20,45 @@ const NAV_ITEMS = [
   "Other Tools",
 ];
 
+function getNavTarget(label) {
+  if (label === "Units") return "/units";
+  if (label === "People") return "/people";
+  return null;
+}
+
+function isActiveRoute(label, pathname) {
+  if (label === "Units") return pathname.startsWith("/units");
+  if (label === "People") return pathname.startsWith("/people");
+  return false;
+}
+
 export function AppShell({ children, communityName, headerAction }) {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const homeTarget = user?.is_admin ? "/units" : user?.membership_id ? `/people/${user.membership_id}` : "/people";
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="logo">VERIDIAN</div>
+
         <nav className="sidebar-nav">
           {NAV_ITEMS.map((label) => {
-            const active = label === "People" && location.pathname.startsWith("/people");
-            const clickable = label === "People";
+            const active = isActiveRoute(label, location.pathname);
+            const target = getNavTarget(label);
+            const clickable = Boolean(target);
+
             const content = (
               <span className={`sidebar-item ${active ? "active" : ""}`}>
                 <span className="sidebar-icon">•</span>
                 <span>{label}</span>
               </span>
             );
+
             return clickable ? (
-              <Link key={label} to="/people" className="sidebar-link">
+              <Link key={label} to={target} className="sidebar-link">
                 {content}
               </Link>
             ) : (
@@ -54,11 +73,13 @@ export function AppShell({ children, communityName, headerAction }) {
       <div className="content-shell">
         <header className="topbar">
           <button className="primary-top-button">Make a Payment</button>
+
           <div className="topbar-right">
-            <button className="community-switcher" onClick={() => navigate("/people")}>
+            <button className="community-switcher" onClick={() => navigate(homeTarget)}>
               <span className="community-dot">◌</span>
               <span>{communityName || "Community"}</span>
             </button>
+
             <button
               className="logout-link"
               onClick={() => {
