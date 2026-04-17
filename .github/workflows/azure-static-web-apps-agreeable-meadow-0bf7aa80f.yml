@@ -31,8 +31,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Fix vite permissions
+        run: chmod +x node_modules/.bin/vite
+
       - name: Build app
-        run: npm run build
+        run: ./node_modules/.bin/vite build
         env:
           VITE_API_URL: https://app-veridian-api-dev.azurewebsites.net/api/v1
 
