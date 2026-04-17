@@ -37,7 +37,7 @@ jobs:
       - name: Build app
         run: ./node_modules/.bin/vite build
         env:
-          VITE_API_URL: https://app-veridian-api-dev.azurewebsites.net/api/v1
+          VITE_API_URL: https://app-veridian-api-dev-atdcced9f7gqaqhj.canadacentral-01.azurewebsites.net/api/v1
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
